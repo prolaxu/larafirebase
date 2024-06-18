@@ -35,7 +35,7 @@ class Larafirebase
 
     public function generateAuthToken()
     {
-        $serviceAccountPath = storage_path(self::FirebaseCredentialsFilePath);
+        $serviceAccountPath = storage_path(config('larafirebase.credential_path'));
         $client = new GoogleClient();
         $client->setAuthConfig($serviceAccountPath);
         $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
@@ -45,7 +45,7 @@ class Larafirebase
 
     public function getProjectId()
     {
-        $serviceAccountPath = storage_path(self::FirebaseCredentialsFilePath);
+        $serviceAccountPath = storage_path(config('larafirebase.credential_path'));
         $data = json_decode(file_get_contents($serviceAccountPath), true);
         return $data['project_id'];
     }
