@@ -2,6 +2,7 @@
 
 namespace Kutia\Larafirebase\Services;
 
+use Google\Client as GoogleClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Kutia\Larafirebase\Exceptions\UnsupportedTokenFormat;
@@ -32,7 +33,22 @@ class Larafirebase
 
     private $fromRaw;
 
-    const API_URI = 'https://fcm.googleapis.com/fcm/send';
+    public function generateAuthToken()
+    {
+        $serviceAccountPath = storage_path(self::FirebaseCredentialsFilePath);
+        $client = new GoogleClient();
+        $client->setAuthConfig($serviceAccountPath);
+        $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
+        $token = $client->fetchAccessTokenWithAssertion()['access_token'];
+        return $token;
+    }
+
+    public function getProjectId()
+    {
+        $serviceAccountPath = storage_path(self::FirebaseCredentialsFilePath);
+        $data = json_decode(file_get_contents($serviceAccountPath), true);
+        return $data['project_id'];
+    }
 
     public function withTitle($title)
     {
@@ -113,19 +129,21 @@ class Larafirebase
 
     public function sendNotification($tokens)
     {
-        $fields = array(
-            'registration_ids' => $this->validateToken($tokens),
-            'notification' => ($this->fromArray) ? $this->fromArray : [
-                'title' => $this->title,
-                'body' => $this->body,
-                'image' => $this->image,
-                'icon' => $this->icon,
-                'sound' => $this->sound,
-                'click_action' => $this->clickAction
-            ],
-            'data' => $this->additionalData,
-            'priority' => $this->priority
-        );
+        $fields = [
+            'message'=>[
+                'registration_ids' => $this->validateToken($tokens),
+                'notification' => ($this->fromArray) ? $this->fromArray : [
+                    'title' => $this->title,
+                    'body' => $this->body,
+                    'image' => $this->image,
+                    'icon' => $this->icon,
+                    'sound' => $this->sound,
+                    'click_action' => $this->clickAction
+                ],
+                'data' => $this->additionalData,
+                'priority' => $this->priority
+            ]
+        ];
 
         return $this->callApi($fields);
     }
@@ -154,12 +172,13 @@ class Larafirebase
 
     private function callApi($fields): Response
     {
-        $authenticationKey = isset($this->authenticationKey) ? $this->authenticationKey:config('larafirebase.authentication_key');
-
+        $projectId = $this->getProjectId();
+        $accessToken = $this->generateAuthToken();
+        $url = "https://fcm.googleapis.com/v1/projects/$projectId/messages:send";
         $response = Http::withHeaders([
-            'Authorization' => 'key=' . $authenticationKey
-        ])->post(self::API_URI, $fields);
-
+            'Authorization' => 'Bearer ' . $accessToken,
+            'Content-Type' => 'application/json',
+        ])->post($url, $fields);
         return $response;
     }
 

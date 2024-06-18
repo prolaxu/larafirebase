@@ -36,14 +36,17 @@ composer require kutia-software-company/larafirebase
 
 Run `php artisan vendor:publish --provider="Kutia\Larafirebase\Providers\LarafirebaseServiceProvider"` to publish the `larafirebase.php` config file.
 
-**Get Athentication Key**
-
-Get Authentication Key from https://console.firebase.google.com/
+**Setup Firebase Credentials Path Setup**
+To generate a private key file for your service account:
+In the Firebase console, open Settings > Service Accounts.
+Click Generate New Private Key, then confirm by clicking Generate Key.
+Securely store the JSON file containing the key.
 
 **Configure larafirebase.php as needed**
+This credentials path is required 
 
 ```
-'authentication_key' => '{AUTHENTICATION_KEY}'
+'credential_path' => '{FIREBASE_CREDENTIAL_PATH}',
 ```
 
 ### Usage

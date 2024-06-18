@@ -1,7 +1,5 @@
 <?php
 
 return [
-
-    'authentication_key' => null
-
+    'credential_path'=>'firebase_credentials.json' // this is storage path | storage_path('firebase_credentials.json')
 ];
